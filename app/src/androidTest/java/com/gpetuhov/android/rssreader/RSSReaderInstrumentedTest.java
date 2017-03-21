@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
 
 import static org.junit.Assert.assertEquals;
@@ -67,8 +68,15 @@ public class RSSReaderInstrumentedTest {
 
     @Test
     public void checkDataStorageReadWrite() {
+
+        // Save flag initial value
+        boolean firstRunFlagOldValue = mUtilsPrefs.isFirstRun();
+
         DataStorage dataStorage = new DataStorage(mContext, mUtilsPrefs);
         Realm realm = dataStorage.getRealm();
+
+        // Check if DataStorage set first run flag to false
+        assertEquals(false, mUtilsPrefs.isFirstRun());
 
         // Write test data to storage
         realm.beginTransaction();
@@ -124,5 +132,62 @@ public class RSSReaderInstrumentedTest {
 
         // Check if post deleted successfully
         assertTrue(rssPostsResult.size() == 0);
+
+        // Restore initial first run flag value
+        mUtilsPrefs.setFirstRunFlagValue(firstRunFlagOldValue);
+    }
+
+    @Test
+    public void checkDataStorageDefaultListCreation() {
+
+        // Realm initialization must be done once.
+        Realm.init(mContext);
+
+        // Create Realm configuration for the test realm file
+        RealmConfiguration realmConfiguration = new RealmConfiguration.Builder()
+                .name("testRealm.realm")
+                .build();
+
+        // Get Realm instance
+        Realm realm = Realm.getInstance(realmConfiguration);
+
+        // Save first run flag value
+        boolean firstRunFlagOldValue = mUtilsPrefs.isFirstRun();
+
+        // Imitate app's first run
+        mUtilsPrefs.setFirstRunFlagValue(true);
+
+        // Create DataStorage instance and set Realm for it
+        DataStorage dataStorage = new DataStorage(mContext, mUtilsPrefs, realm);
+        // After this default feed list must be written to storage
+
+        // Get default feed titles and links from resources
+        String[] defaultFeedTitles =
+                mContext.getResources().getStringArray(R.array.default_rss_feed_titles);
+        String[] defaultFeedLinks =
+                mContext.getResources().getStringArray(R.array.default_rss_feed_links);
+
+        // For all titles
+        for (int i = 0; i < defaultFeedTitles.length; i++) {
+            // Find feed in Realm with i-th title
+            RealmResults<RSSFeed> rssFeeds =
+                    realm.where(RSSFeed.class).equalTo("mTitle", defaultFeedTitles[i]).findAll();
+
+            // Check if result exists and there is only 1 result
+            assertNotNull(rssFeeds);
+            assertTrue(rssFeeds.size() == 1);
+
+            // Check if link of i-th feed equals to value in initial array
+            assertEquals(defaultFeedLinks[i], rssFeeds.get(0).getLink());
+        }
+
+        // Restore first run flag value
+        mUtilsPrefs.setFirstRunFlagValue(firstRunFlagOldValue);
+
+        // Realm instance must be closed
+        realm.close();
+
+        // Delete test Realm file
+        Realm.deleteRealm(realmConfiguration);
     }
 }

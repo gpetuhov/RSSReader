@@ -76,7 +76,6 @@ public class FeedListFragment extends Fragment {
         mUnbinder.unbind();
     }
 
-
     // === RECYCLERVIEW VIEWHOLDER AND ADAPTER =====
 
     class FeedHolder extends RecyclerView.ViewHolder

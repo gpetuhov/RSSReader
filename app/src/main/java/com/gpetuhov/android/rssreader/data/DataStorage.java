@@ -16,6 +16,7 @@ public class DataStorage {
     private UtilsPrefs mUtilsPrefs;
     private Realm mRealm;
 
+    // Constructor for use in app
     public DataStorage(Context context, UtilsPrefs utilsPrefs) {
 
         mContext = context;
@@ -27,6 +28,20 @@ public class DataStorage {
         // Get Realm instance
         mRealm = Realm.getDefaultInstance();
 
+        initStorage();
+    }
+
+    // Constructor for testing.
+    // Realm must be provided by user.
+    public DataStorage(Context context, UtilsPrefs utilsPrefs, Realm realm) {
+        mContext = context;
+        mUtilsPrefs = utilsPrefs;
+        mRealm = realm;
+
+        initStorage();
+    }
+
+    private void initStorage() {
         // Check if this is the first time the app runs on the device
         if (mUtilsPrefs.isFirstRun()) {
             // Create default RSS feed list
