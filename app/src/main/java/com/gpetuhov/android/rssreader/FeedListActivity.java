@@ -1,13 +1,11 @@
 package com.gpetuhov.android.rssreader;
 
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.support.v4.app.Fragment;
 
-public class FeedListActivity extends AppCompatActivity {
+public class FeedListActivity extends SingleFragmentActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_feed_list);
+    protected Fragment createFragment() {
+        return new FeedListFragment();
     }
 }
