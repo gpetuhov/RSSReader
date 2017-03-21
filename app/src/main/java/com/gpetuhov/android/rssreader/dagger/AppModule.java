@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.utils.UtilsPrefs;
 
 import javax.inject.Singleton;
@@ -42,5 +43,13 @@ public class AppModule {
     UtilsPrefs providesUtilsPrefs(SharedPreferences sharedPreferences) {
         UtilsPrefs utilsPrefs = new UtilsPrefs(sharedPreferences);
         return utilsPrefs;
+    }
+
+    // Returns instance of DataStorage
+    @Provides
+    @Singleton
+    DataStorage providesDataStorage(Application application, UtilsPrefs utilsPrefs) {
+        DataStorage dataStorage = new DataStorage(application, utilsPrefs);
+        return dataStorage;
     }
 }

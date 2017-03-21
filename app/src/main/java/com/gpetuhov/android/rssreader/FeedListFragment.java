@@ -10,10 +10,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.data.RSSFeed;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -23,6 +25,9 @@ import butterknife.Unbinder;
 // Fragment with list of RSS feeds
 public class FeedListFragment extends Fragment {
 
+    // Keeps instance of DataStorage. Injected by Dagger.
+    @Inject DataStorage mDataStorage;
+
     // RecyclerView for RSS feed list
     @BindView(R.id.feed_list_recycler_view) RecyclerView mFeedListRecyclerView;
 
@@ -31,6 +36,14 @@ public class FeedListFragment extends Fragment {
 
     // Adapter for the RecyclerView
     private FeedAdapter mFeedAdapter;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Inject DataStorage instance into this fragment
+        RSSReaderApp.getAppComponent().inject(this);
+    }
 
     @Nullable
     @Override
@@ -45,31 +58,14 @@ public class FeedListFragment extends Fragment {
         // Set LinearLayoutManager for our RecyclerView (we need vertical scroll list)
         mFeedListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        // Create new adapter for the RecyclerView
-        mFeedAdapter = new FeedAdapter(createDummyFeedList());
+        // Get list of RSS feeds from the storage
+        // and create new adapter for the RecyclerView with it.
+        mFeedAdapter = new FeedAdapter(mDataStorage.getFeedList());
 
         // Attach adapter to the RecyclerView
         mFeedListRecyclerView.setAdapter(mFeedAdapter);
 
         return v;
-    }
-
-    private List<RSSFeed> createDummyFeedList() {
-        String[] feedLinks = {
-                "https://habrahabr.ru/rss/best/",
-                "https://habrahabr.ru/rss/best/weekly/",
-                "https://habrahabr.ru/rss/best/monthly/",
-                "https://habrahabr.ru/rss/best/alltime/"
-        };
-
-        List<RSSFeed> rssFeeds = new ArrayList<>();
-
-        for (String feedLink : feedLinks) {
-            RSSFeed rssFeed = new RSSFeed(feedLink);
-            rssFeeds.add(rssFeed);
-        }
-
-        return rssFeeds;
     }
 
     @Override

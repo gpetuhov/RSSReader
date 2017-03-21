@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--Arrays for default RSS feed list-->
+
+    <!--Default RSS feed titles-->
+    <string-array name="default_rss_feed_titles">
+        <item>@string/default_rss_feed_title_1</item>
+        <item>@string/default_rss_feed_title_2</item>
+        <item>@string/default_rss_feed_title_3</item>
+        <item>@string/default_rss_feed_title_4</item>
+    </string-array>
+
+    <!--Default RSS feed links-->
+    <string-array name="default_rss_feed_links">
+        <item>@string/default_rss_feed_link_1</item>
+        <item>@string/default_rss_feed_link_2</item>
+        <item>@string/default_rss_feed_link_3</item>
+        <item>@string/default_rss_feed_link_4</item>
+    </string-array>
+
+</resources>
