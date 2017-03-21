@@ -1,4 +1,4 @@
-package com.gpetuhov.android.rssreader.rss;
+package com.gpetuhov.android.rssreader.data;
 
 
 public class RSSFeed {

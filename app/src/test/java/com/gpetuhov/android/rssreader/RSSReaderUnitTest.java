@@ -1,6 +1,6 @@
 package com.gpetuhov.android.rssreader;
 
-import com.gpetuhov.android.rssreader.rss.RSSFeed;
+import com.gpetuhov.android.rssreader.data.RSSFeed;
 
 import org.junit.Test;
 

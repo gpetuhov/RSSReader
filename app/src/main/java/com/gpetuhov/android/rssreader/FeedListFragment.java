@@ -10,7 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.gpetuhov.android.rssreader.rss.RSSFeed;
+import com.gpetuhov.android.rssreader.data.RSSFeed;
 
 import java.util.ArrayList;
 import java.util.List;
