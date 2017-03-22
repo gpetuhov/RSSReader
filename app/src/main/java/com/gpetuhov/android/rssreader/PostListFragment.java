@@ -1,5 +1,6 @@
 package com.gpetuhov.android.rssreader;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -17,6 +18,7 @@ import com.gpetuhov.android.rssreader.data.RSSPost;
 import com.gpetuhov.android.rssreader.events.FeedFetchErrorEvent;
 import com.gpetuhov.android.rssreader.events.FeedFetchSuccessEvent;
 import com.gpetuhov.android.rssreader.events.OpenFeedEvent;
+import com.gpetuhov.android.rssreader.events.OpenPostEvent;
 import com.gpetuhov.android.rssreader.utils.UtilsNet;
 
 import org.greenrobot.eventbus.EventBus;
@@ -33,9 +35,6 @@ import butterknife.Unbinder;
 
 // Fragment for list of RSS posts in the feed
 public class PostListFragment extends Fragment {
-
-    // Key for storing feed link in saved instance state Bundle
-    public static final String FEED_LINK_KEY = "feed_link_key";
 
     // Dependencies injected by Dagger
     @Inject DataStorage mDataStorage;
@@ -104,20 +103,14 @@ public class PostListFragment extends Fragment {
                 layoutManager.getOrientation());
         mPostListRecyclerView.addItemDecoration(dividerItemDecoration);
 
-        // Check if there is saved instance state Bundle
-        if (savedInstanceState != null) {
-            // We got here after screen rotation
-            mFeedLink = savedInstanceState.getString(FEED_LINK_KEY);
-        } else {
-            // Fragment is just created.
+        // Manually get event with feed link from EventBus.
+        // To do this we don't have to register to listen to EventBus events in onStart().
+        // Do not remove it, as it will be needed if fragment is recreated
+        // (on screen rotation and returning from post fragment).
+        OpenFeedEvent openFeedEvent = mEventBus.getStickyEvent(OpenFeedEvent.class);
 
-            // Manually get event with feed link from EventBus and remove it.
-            // To do this we don't have to register to listen to EventBus events in onStart().
-            OpenFeedEvent openFeedEvent = mEventBus.removeStickyEvent(OpenFeedEvent.class);
-
-            // Get RSS feed link from event
-            mFeedLink = openFeedEvent.getFeedLink();
-        }
+        // Get RSS feed link from event
+        mFeedLink = openFeedEvent.getFeedLink();
 
         updateUI();
 
@@ -144,8 +137,6 @@ public class PostListFragment extends Fragment {
 
             // Start fetching post list from the feed link
             mFeedFetcher.fetchFeed(mFeedLink);
-
-            // TODO: Implement callbacks from the fetcher
         }
 
         return v;
@@ -170,14 +161,6 @@ public class PostListFragment extends Fragment {
         mUnbinder.unbind();
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        // Save feed link in out state Bundle
-        outState.putString(FEED_LINK_KEY, mFeedLink);
-    }
-
     // === RECYCLERVIEW VIEWHOLDER AND ADAPTER =====
 
     class PostHolder extends RecyclerView.ViewHolder
@@ -187,8 +170,7 @@ public class PostListFragment extends Fragment {
         private RSSPost mRSSPost;
 
         // TextView for post title
-        @BindView(R.id.post_title)
-        public TextView mPostTitleTextView;
+        @BindView(R.id.post_title) TextView mPostTitleTextView;
 
         public PostHolder(View itemView) {
             super(itemView);
@@ -206,7 +188,24 @@ public class PostListFragment extends Fragment {
 
         @Override
         public void onClick(View v) {
-            // TODO: Handle post clicks here
+
+            // Remove previously posted sticky event
+            mEventBus.removeStickyEvent(OpenPostEvent.class);
+
+            // Post STICKY event to EventBus.
+            // This is needed, because at this moment post fragment is not started
+            // and can't receive events.
+            // Post fragment will be able
+            // to get sticky event from EventBus after start.
+            mEventBus.postSticky(new OpenPostEvent(mRSSPost.getTitle(), mRSSPost.getDescription()));
+
+            // Create explicit intent to start post activity.
+            // No need to add post details as intent extra,
+            // because we deliver them to post fragment via EventBus.
+            Intent intent = new Intent(getActivity(), PostActivity.class);
+
+            // Start post list activity
+            startActivity(intent);
         }
     }
 

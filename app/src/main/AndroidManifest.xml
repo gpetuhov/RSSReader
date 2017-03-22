@@ -29,6 +29,12 @@
             android:parentActivityName=".FeedListActivity">
         </activity>
 
+        <!--Activity with post details-->
+        <activity
+            android:name=".PostActivity"
+            android:parentActivityName=".PostListActivity">
+        </activity>
+
     </application>
 
 </manifest>

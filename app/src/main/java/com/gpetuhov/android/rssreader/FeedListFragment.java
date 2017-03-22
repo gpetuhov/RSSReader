@@ -98,7 +98,7 @@ public class FeedListFragment extends Fragment {
         private RSSFeed mRSSFeed;
 
         // TextView for RSS Feed title
-        @BindView(R.id.rss_feed_title) public TextView mRSSFeedTitleTextView;
+        @BindView(R.id.rss_feed_title) TextView mRSSFeedTitleTextView;
 
         public FeedHolder(View itemView) {
             super(itemView);
@@ -116,7 +116,11 @@ public class FeedListFragment extends Fragment {
 
         @Override
         public void onClick(View v) {
-            // Post result to EventBus as STICKY event.
+
+            // Remove previously posted sticky event
+            mEventBus.removeStickyEvent(OpenFeedEvent.class);
+
+            // Post STICKY event to EventBus.
             // This is needed, because at this moment post list fragment is not started
             // and can't receive events.
             // Post list fragment will be able

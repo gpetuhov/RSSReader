@@ -1,6 +1,7 @@
 package com.gpetuhov.android.rssreader.dagger;
 
 import com.gpetuhov.android.rssreader.FeedListFragment;
+import com.gpetuhov.android.rssreader.PostFragment;
 import com.gpetuhov.android.rssreader.PostListFragment;
 
 import javax.inject.Singleton;
@@ -13,4 +14,5 @@ import dagger.Component;
 public interface AppComponent {
     void inject(FeedListFragment feedListFragment);
     void inject(PostListFragment postListFragment);
+    void inject(PostFragment postFragment);
 }
