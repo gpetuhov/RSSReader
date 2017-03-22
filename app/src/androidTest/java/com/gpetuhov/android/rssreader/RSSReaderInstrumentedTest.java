@@ -47,6 +47,7 @@ public class RSSReaderInstrumentedTest {
     private Context mContext;
     private SharedPreferences mSharedPreferences;
     private UtilsPrefs mUtilsPrefs;
+    private EventBus mEventBus;
 
     private boolean mFirstRunFlagOldValue;
 
@@ -70,6 +71,8 @@ public class RSSReaderInstrumentedTest {
         saveFirstRunFlagInitialValue();
 
         createTestRealm();
+
+        mEventBus = EventBus.getDefault();
     }
 
     private void saveFirstRunFlagInitialValue() {
@@ -281,7 +284,7 @@ public class RSSReaderInstrumentedTest {
 
             // Extract feed title from sample XML
             String feedTitle =
-                    new FeedFetcher(new OkHttpClient(), dataStorage).extractFeedTitle(mXmlPullParser);
+                    new FeedFetcher(new OkHttpClient(), dataStorage, mEventBus).extractFeedTitle(mXmlPullParser);
 
             // Check if extracted title is the same as in sample XML
             assertEquals(expectedFeedTitle, feedTitle);
@@ -337,7 +340,7 @@ public class RSSReaderInstrumentedTest {
 
             // Extract feed posts from sample XML
             List<RSSPost> rssPosts =
-                    new FeedFetcher(new OkHttpClient(), dataStorage).extractFeedPosts(mXmlPullParser);
+                    new FeedFetcher(new OkHttpClient(), dataStorage, mEventBus).extractFeedPosts(mXmlPullParser);
 
             // Check if extracted are the same as in sample XML
             for (int i = 0; i < 2; i++) {

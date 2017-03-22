@@ -5,7 +5,10 @@ import android.util.Xml;
 
 import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.data.RSSPost;
+import com.gpetuhov.android.rssreader.events.FeedFetchErrorEvent;
+import com.gpetuhov.android.rssreader.events.FeedFetchSuccessEvent;
 
+import org.greenrobot.eventbus.EventBus;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -26,11 +29,11 @@ import retrofit2.http.Url;
 // Fetches XML for the RSS feed
 public class FeedFetcher implements Callback<ResponseBody> {
 
-    private static final String LOG_TAG = FeedFetcher.class.getName();
-
     private OkHttpClient mOkHttpClient;
-    private Retrofit mRetrofit;
     private DataStorage mDataStorage;
+    private EventBus mEventBus;
+
+    private Retrofit mRetrofit;
 
     // Keeps response from the server converted to InputStream
     // (this is needed for XMLPullParser).
@@ -49,9 +52,10 @@ public class FeedFetcher implements Callback<ResponseBody> {
         // not base URL, @GET(url) and query parameters as usual.
     }
 
-    public FeedFetcher(OkHttpClient okHttpClient, DataStorage dataStorage) {
+    public FeedFetcher(OkHttpClient okHttpClient, DataStorage dataStorage, EventBus eventBus) {
         mOkHttpClient = okHttpClient;
         mDataStorage = dataStorage;
+        mEventBus = eventBus;
     }
 
     public void fetchFeed(String feedLink) {
@@ -88,13 +92,11 @@ public class FeedFetcher implements Callback<ResponseBody> {
             // Parse received response
             parseXMLResponse();
         }
-
-        // TODO: Report success
     }
 
     @Override
     public void onFailure(Call<ResponseBody> call, Throwable t) {
-        // TODO: Report error
+        reportError("Error fetching feed from network");
     }
 
     // === XML PARSING =====
@@ -118,35 +120,37 @@ public class FeedFetcher implements Callback<ResponseBody> {
 
                 // If feed title is empty, report error
                 if (mFeedTitle.equals("")) {
-                    // TODO: report error
+                    reportError("Error extracting feed title");
+                    return;
                 }
 
                 // Extract feed posts
                 mRSSPosts = extractFeedPosts(parser);
 
                 if (null == mRSSPosts) {
-                    // TODO: Report error
+                    reportErrorExtractingPosts();
+                    return;
                 } else if (mRSSPosts.size() == 0) {
-                    // TODO: Report error
+                    reportErrorExtractingPosts();
+                    return;
                 }
 
-                // TODO: Write all changes to storage here (feed title and posts)
-                // mDataStorage.updateFeed(mFeedLink, mFeedTitle, mRSSPosts);
+                // Write extracted feed to storage
+                mDataStorage.updateFeed(mFeedLink, mFeedTitle, mRSSPosts);
 
-            } catch (XmlPullParserException e) {
-                // TODO: Report error
-            } catch (IOException e) {
-                // TODO: Report error
+                reportSuccess();
+
+            } catch (XmlPullParserException | IOException e) {
+                reportErrorParsingXML();
             }
         } else {
-            // TODO: Report error
+            reportError("Received no XML response");
         }
     }
 
     // Extract feed title from XML response
     public String extractFeedTitle(XmlPullParser parser) throws XmlPullParserException, IOException {
-        String feedTitle = extractTagText("title", parser);
-        return feedTitle;
+        return extractTagText("title", parser);
     }
 
     private String extractTagText(String tagName, XmlPullParser parser) throws XmlPullParserException, IOException {
@@ -224,5 +228,23 @@ public class FeedFetcher implements Callback<ResponseBody> {
         }
 
         return rssPosts;
+    }
+
+    // === REPORT SUCCESS OR ERROR =====
+
+    private void reportSuccess() {
+        mEventBus.post(new FeedFetchSuccessEvent());
+    }
+
+    private void reportError(String errorMessage) {
+        mEventBus.post(new FeedFetchErrorEvent(errorMessage));
+    }
+
+    private void reportErrorExtractingPosts() {
+        reportError("Error extracting feed posts");
+    }
+
+    private void reportErrorParsingXML() {
+        reportError("Error parsing XML");
     }
 }

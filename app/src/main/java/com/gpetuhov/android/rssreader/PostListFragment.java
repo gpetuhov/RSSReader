@@ -9,13 +9,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.data.RSSPost;
+import com.gpetuhov.android.rssreader.events.FeedFetchErrorEvent;
+import com.gpetuhov.android.rssreader.events.FeedFetchSuccessEvent;
 import com.gpetuhov.android.rssreader.events.OpenFeedEvent;
 import com.gpetuhov.android.rssreader.utils.UtilsNet;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.List;
 
@@ -59,6 +64,22 @@ public class PostListFragment extends Fragment {
         RSSReaderApp.getAppComponent().inject(this);
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // Register to listen to EventBus events
+        mEventBus.register(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // Unregister from EventBus
+        mEventBus.unregister(this);
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -81,14 +102,7 @@ public class PostListFragment extends Fragment {
             // Get RSS feed link from event
             mFeedLink = openFeedEvent.getFeedLink();
 
-            // Get list of posts from the feed with provided link
-            mPostList = mDataStorage.getPostList(mFeedLink);
-
-            // Create new adapter with the list of posts
-            mPostAdapter = new PostAdapter(mPostList);
-
-            // Attach adapter to the RecyclerView
-            mPostListRecyclerView.setAdapter(mPostAdapter);
+            updateUI();
 
             // Check network connection
             if (!UtilsNet.isNetworkAvailableAndConnected(getActivity())) {
@@ -119,6 +133,17 @@ public class PostListFragment extends Fragment {
         }
 
         return v;
+    }
+
+    private void updateUI() {
+        // Get list of posts from the feed with provided link
+        mPostList = mDataStorage.getPostList(mFeedLink);
+
+        // Create new adapter with the list of posts
+        mPostAdapter = new PostAdapter(mPostList);
+
+        // Attach adapter to the RecyclerView
+        mPostListRecyclerView.setAdapter(mPostAdapter);
     }
 
     @Override
@@ -195,5 +220,21 @@ public class PostListFragment extends Fragment {
                 return 0;
             }
         }
+    }
+
+    // === FEEDFETCHER CALLBACKS =====
+
+    // Called when a FeedFetchSuccessEvent is posted (in the main thread to update UI)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onFeedFetchSuccess(FeedFetchSuccessEvent event) {
+        updateUI();
+    }
+
+    // Called when a FeedFetchErrorEvent is posted (in the main thread to display Toast)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onFeedFetchError(FeedFetchErrorEvent event) {
+        // Get error message from the event and display Toast
+        String errorMessage = event.getErrorMessage();
+        Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
     }
 }
