@@ -304,26 +304,50 @@ public class RSSReaderInstrumentedTest {
     }
 
     @Test
-    public void checkAddFeedAndSetTitle() {
-        // Create DataStorage instance and set Realm for it
-        DataStorage dataStorage = new DataStorage(mContext, mUtilsPrefs, mTestRealm);
+    public void checkExtractFeedPostsFromXML() {
+        // Sample XML response
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<rss version=\"2.0\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\"  >\n" +
+                "<channel>\n" +
+                "\t<title>Feed title</title>\n" +
+                "\t<link>https://server.com/</link>\n" +
+                "\t<item>\n" +
+                "\t\t<title>Post title 0</title>\n" +
+                "\t\t<link>Post link 0</link>\n" +
+                "\t\t<description>Post description 0</description>   \n" +
+                "\t\t<pubDate>Tue, 21 Mar 2017 11:17:55 GMT</pubDate>\n" +
+                "\t</item>\n" +
+                "\t<item>\n" +
+                "\t\t<title>Post title 1</title>\n" +
+                "\t\t<link>Post link 1</link>\n" +
+                "\t\t<description>Post description 1</description>   \n" +
+                "\t\t<pubDate>Tue, 21 Mar 2017 11:17:57 GMT</pubDate>\n" +
+                "\t</item>\n" +
+                "</channel>\n" +
+                "</rss>";
 
-        // Add feed to storage
-        dataStorage.addFeed(FEED_LINK);
+        // Create InputStream from String
+        InputStream inputStream = new ByteArrayInputStream(xmlString.getBytes());
 
-        // Set new feed title
-        String newFeedTitle = "New feed title";
-        boolean isUpdated = dataStorage.setFeedTitle(FEED_LINK, newFeedTitle);
+        try {
+            createParser(inputStream);
 
-        // Check if returned true
-        assertTrue(isUpdated);
+            // Create DataStorage instance and set Realm for it
+            DataStorage dataStorage = new DataStorage(mContext, mUtilsPrefs, mTestRealm);
 
-        // Get feed from data storage
-        RSSFeed rssFeed = dataStorage.getFeed(FEED_LINK);
+            // Extract feed posts from sample XML
+            List<RSSPost> rssPosts =
+                    new FeedFetcher(new OkHttpClient(), dataStorage).extractFeedPosts(mXmlPullParser);
 
-        // Check if feed exists and its title is updated
-        assertNotNull(rssFeed);
-        assertEquals(newFeedTitle, rssFeed.getTitle());
+            // Check if extracted are the same as in sample XML
+            for (int i = 0; i < 2; i++) {
+                RSSPost rssPost = rssPosts.get(i);
+                assertEquals("Post title " + i, rssPost.getTitle());
+                assertEquals("Post description " + i, rssPost.getDescription());
+            }
+        } catch (XmlPullParserException e) {
+        } catch (IOException e) {
+        }
     }
 
     @Test

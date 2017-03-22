@@ -101,33 +101,6 @@ public class DataStorage {
         return mRealm.where(RSSFeed.class).equalTo("mLink", feedLink).findFirst();
     }
 
-    public void addFeed(String link) {
-        mRealm.beginTransaction();
-        RSSFeed rssFeed = mRealm.createObject(RSSFeed.class);
-        rssFeed.setLink(link);
-        mRealm.commitTransaction();
-    }
-
-    // Set title of the feed with the given link.
-    // Return true on success.
-    public boolean setFeedTitle(String feedLink, String newTitle) {
-
-        // Query Realm for RSS feed with provided link
-        final RSSFeed rssFeed = getFeed(feedLink);
-
-        // Check if result exists
-        if (rssFeed != null) {
-            // If feed exists, update its title
-            mRealm.beginTransaction();
-            rssFeed.setTitle(newTitle);
-            mRealm.commitTransaction();
-            return true;
-        } else {
-            // Otherwise return false
-            return false;
-        }
-    }
-
     // Update feed with new title and posts.
     // If the feed does not exist, create it.
     public void updateFeed(String feedLink, String newTitle, List<RSSPost> newPosts) {
