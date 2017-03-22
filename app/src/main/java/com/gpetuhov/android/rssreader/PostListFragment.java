@@ -33,6 +33,9 @@ import butterknife.Unbinder;
 // Fragment for list of RSS posts in the feed
 public class PostListFragment extends Fragment {
 
+    // Key for storing feed link in saved instance state Bundle
+    public static final String FEED_LINK_KEY = "feed_link_key";
+
     // Dependencies injected by Dagger
     @Inject DataStorage mDataStorage;
     @Inject EventBus mEventBus;
@@ -93,43 +96,48 @@ public class PostListFragment extends Fragment {
         // Set LinearLayoutManager for our RecyclerView (we need vertical scroll list)
         mPostListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        // Manually get event with feed link from EventBus and remove it.
-        // To do this we don't have to register to listen to EventBus events in onStart().
-        OpenFeedEvent openFeedEvent = mEventBus.removeStickyEvent(OpenFeedEvent.class);
+        // Check if there is saved instance state Bundle
+        if (savedInstanceState != null) {
+            // We got here after screen rotation
+            mFeedLink = savedInstanceState.getString(FEED_LINK_KEY);
+        } else {
+            // Fragment is just created.
 
-        // Check if an event was actually posted before
-        if(openFeedEvent != null) {
+            // Manually get event with feed link from EventBus and remove it.
+            // To do this we don't have to register to listen to EventBus events in onStart().
+            OpenFeedEvent openFeedEvent = mEventBus.removeStickyEvent(OpenFeedEvent.class);
+
             // Get RSS feed link from event
             mFeedLink = openFeedEvent.getFeedLink();
+        }
 
-            updateUI();
+        updateUI();
 
-            // Check network connection
-            if (!UtilsNet.isNetworkAvailableAndConnected(getActivity())) {
-                // No network connection
-                // Check if there is cached data
-                if (mPostList.size() == 0) {
-                    // No cached data. Display error
+        // Check network connection
+        if (!UtilsNet.isNetworkAvailableAndConnected(getActivity())) {
+            // No network connection
+            // Check if there is cached data
+            if (mPostList.size() == 0) {
+                // No cached data. Display error
 
-                    // Hide RecyclerView
-                    mPostListRecyclerView.setVisibility(View.GONE);
+                // Hide RecyclerView
+                mPostListRecyclerView.setVisibility(View.GONE);
 
-                    // Display empty view
-                    mEmptyTextView.setVisibility(View.VISIBLE);
-                }
-            } else {
-                // Network connection available
-                // Display RecyclerView with cached data
-                mPostListRecyclerView.setVisibility(View.VISIBLE);
-
-                // Hide empty view
-                mEmptyTextView.setVisibility(View.GONE);
-
-                // Start fetching post list from the feed link
-                mFeedFetcher.fetchFeed(mFeedLink);
-
-                // TODO: Implement callbacks from the fetcher
+                // Display empty view
+                mEmptyTextView.setVisibility(View.VISIBLE);
             }
+        } else {
+            // Network connection available
+            // Display RecyclerView with cached data
+            mPostListRecyclerView.setVisibility(View.VISIBLE);
+
+            // Hide empty view
+            mEmptyTextView.setVisibility(View.GONE);
+
+            // Start fetching post list from the feed link
+            mFeedFetcher.fetchFeed(mFeedLink);
+
+            // TODO: Implement callbacks from the fetcher
         }
 
         return v;
@@ -152,6 +160,14 @@ public class PostListFragment extends Fragment {
 
         // This is recommended to do here when using Butterknife in fragments
         mUnbinder.unbind();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        // Save feed link in out state Bundle
+        outState.putString(FEED_LINK_KEY, mFeedLink);
     }
 
     // === RECYCLERVIEW VIEWHOLDER AND ADAPTER =====
@@ -227,7 +243,7 @@ public class PostListFragment extends Fragment {
     // Called when a FeedFetchSuccessEvent is posted (in the main thread to update UI)
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onFeedFetchSuccess(FeedFetchSuccessEvent event) {
-        updateUI();
+        mPostAdapter.notifyDataSetChanged();
     }
 
     // Called when a FeedFetchErrorEvent is posted (in the main thread to display Toast)
