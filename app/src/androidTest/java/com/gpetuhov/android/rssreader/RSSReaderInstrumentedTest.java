@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Xml;
 
 import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.data.RSSFeed;
@@ -17,12 +18,18 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
+import okhttp3.OkHttpClient;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -47,6 +54,8 @@ public class RSSReaderInstrumentedTest {
 
     // Realm instance for test Realm file
     private Realm mTestRealm;
+
+    private XmlPullParser mXmlPullParser;
 
     @Before
     public void initTest() {
@@ -243,6 +252,51 @@ public class RSSReaderInstrumentedTest {
         // Check if the post in result is the one we have just written
         assertEquals(POST_TITLE, rssPostList.get(0).getTitle());
         assertEquals(POST_DESCRIPTION, rssPostList.get(0).getDescription());
+    }
+
+    @Test
+    public void checkExtractFeedTitleFromXML() {
+
+        String expectedFeedTitle = "Awesome feed title";
+
+        // Sample XML response
+        String xmlString =
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<rss version=\"2.0\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\"  >\n" +
+                "<channel>\n" +
+                "\t<title>" + expectedFeedTitle + "</title>\n" +
+                "\t<link>https://server.com/</link>\n" +
+                "</channel>\n" +
+                "</rss>";
+
+        // Create InputStream from String
+        InputStream inputStream = new ByteArrayInputStream(xmlString.getBytes());
+
+        try {
+            createParser(inputStream);
+
+            // Extract feed title from sample XML
+            String feedTitle =
+                    new FeedFetcher(new OkHttpClient()).extractFeedTitle(mXmlPullParser);
+
+            // Check if extracted title is the same as in sample XML
+            assertEquals(expectedFeedTitle, feedTitle);
+
+        } catch (XmlPullParserException e) {
+        } catch (IOException e) {
+        }
+    }
+
+    // Create XML parser for provided input stream
+    private void createParser(InputStream input) throws XmlPullParserException {
+        // Create new XML parser (ExpatPullParser is used)
+        mXmlPullParser = Xml.newPullParser();
+
+        // Do not process namespaces
+        mXmlPullParser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+
+        // Set input for the parser
+        mXmlPullParser.setInput(input, null);
     }
 
     @After
