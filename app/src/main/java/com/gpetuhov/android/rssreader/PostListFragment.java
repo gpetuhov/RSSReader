@@ -31,6 +31,7 @@ public class PostListFragment extends Fragment {
     // Dependencies injected by Dagger
     @Inject DataStorage mDataStorage;
     @Inject EventBus mEventBus;
+    @Inject FeedFetcher mFeedFetcher;
 
     // RecyclerView for posts list
     @BindView(R.id.post_list_recycler_view) RecyclerView mPostListRecyclerView;
@@ -110,7 +111,10 @@ public class PostListFragment extends Fragment {
                 // Hide empty view
                 mEmptyTextView.setVisibility(View.GONE);
 
-                // TODO: Start fetching post list from the network here
+                // Start fetching post list from the feed link
+                mFeedFetcher.fetchFeed(mFeedLink);
+
+                // TODO: Implement callbacks from the fetcher
             }
         }
 

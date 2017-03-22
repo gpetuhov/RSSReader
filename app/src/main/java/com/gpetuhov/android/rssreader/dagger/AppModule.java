@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.gpetuhov.android.rssreader.FeedFetcher;
 import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.utils.UtilsPrefs;
 
@@ -13,6 +14,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import okhttp3.OkHttpClient;
 
 // Dagger module tells, what instances will be instantiated
 @Module
@@ -60,5 +62,21 @@ public class AppModule {
     @Singleton
     EventBus providesEventBus() {
         return EventBus.getDefault();
+    }
+
+    // Returns instance of OkHttpClient
+    @Provides
+    @Singleton
+    OkHttpClient provideOkHttpClient() {
+        OkHttpClient client = new OkHttpClient();
+        return client;
+    }
+
+    // Returns instance of FeedFetcher
+    @Provides
+    @Singleton
+    FeedFetcher providesFeedFetcher(OkHttpClient okHttpClient) {
+        FeedFetcher feedFetcher = new FeedFetcher(okHttpClient);
+        return feedFetcher;
     }
 }
