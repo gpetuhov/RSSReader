@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.data.RSSPost;
 import com.gpetuhov.android.rssreader.events.OpenFeedEvent;
+import com.gpetuhov.android.rssreader.utils.UtilsNet;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -34,6 +35,9 @@ public class PostListFragment extends Fragment {
 
     // RecyclerView for posts list
     @BindView(R.id.post_list_recycler_view) RecyclerView mPostListRecyclerView;
+
+    // TextView to display when no data available
+    @BindView(R.id.empty_view) TextView mEmptyTextView;
 
     // Keeps Unbinder object to properly unbind views in onDestroyView of the fragment
     private Unbinder mUnbinder;
@@ -73,13 +77,32 @@ public class PostListFragment extends Fragment {
         if(openFeedEvent != null) {
             // Get RSS feed link from event
             mFeedLink = openFeedEvent.getFeedLink();
+
+            // If there is no network connection
+            if (!UtilsNet.isNetworkAvailableAndConnected(getActivity())) {
+                // Display error
+
+                // Hide RecyclerView
+                mPostListRecyclerView.setVisibility(View.GONE);
+
+                // Display empty view
+                mEmptyTextView.setVisibility(View.VISIBLE);
+            } else {
+                // Otherwise display RecyclerView with data
+
+                // Display RecyclerView
+                mPostListRecyclerView.setVisibility(View.VISIBLE);
+
+                // Hide empty view
+                mEmptyTextView.setVisibility(View.GONE);
+            }
+
+            // TODO: Get posts from DataStorage here
+            mPostAdapter = new PostAdapter(new ArrayList<RSSPost>());
+
+            // Attach adapter to the RecyclerView
+            mPostListRecyclerView.setAdapter(mPostAdapter);
         }
-
-        // TODO: Get posts from DataStorage here
-        mPostAdapter = new PostAdapter(new ArrayList<RSSPost>());
-
-        // Attach adapter to the RecyclerView
-        mPostListRecyclerView.setAdapter(mPostAdapter);
 
         return v;
     }

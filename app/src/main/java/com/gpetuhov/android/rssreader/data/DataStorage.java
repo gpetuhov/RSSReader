@@ -7,6 +7,7 @@ import com.gpetuhov.android.rssreader.R;
 import com.gpetuhov.android.rssreader.utils.UtilsPrefs;
 
 import io.realm.Realm;
+import io.realm.RealmList;
 import io.realm.RealmResults;
 
 // Controls data storage for offline use
@@ -76,6 +77,23 @@ public class DataStorage {
     // Get list of all RSS feeds in the storage
     public RealmResults<RSSFeed> getFeedList() {
         return mRealm.where(RSSFeed.class).findAll();
+    }
+
+    // Get list of posts in the feed with the given link
+    public RealmList<RSSPost> getPostList(String feedLink) {
+
+        // Query Realm for RSS feed with provided link
+        final RSSFeed rssFeed =
+                mRealm.where(RSSFeed.class).equalTo("mLink", feedLink).findFirst();
+
+        // Check if result exists
+        if (rssFeed != null) {
+            // If feed exists, return list of posts from it
+            return rssFeed.getRSSPostList();
+        } else {
+            // Otherwise return empty list
+            return new RealmList<>();
+        }
     }
 
     @Override
