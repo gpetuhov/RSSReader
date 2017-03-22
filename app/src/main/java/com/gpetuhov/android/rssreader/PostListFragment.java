@@ -17,7 +17,6 @@ import com.gpetuhov.android.rssreader.utils.UtilsNet;
 
 import org.greenrobot.eventbus.EventBus;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -47,6 +46,9 @@ public class PostListFragment extends Fragment {
 
     // Keeps RSS feed link
     private String mFeedLink;
+
+    // Keeps list of posts from the feed with provided link
+    private List<RSSPost> mPostList;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -78,30 +80,38 @@ public class PostListFragment extends Fragment {
             // Get RSS feed link from event
             mFeedLink = openFeedEvent.getFeedLink();
 
-            // If there is no network connection
+            // Get list of posts from the feed with provided link
+            mPostList = mDataStorage.getPostList(mFeedLink);
+
+            // Create new adapter with the list of posts
+            mPostAdapter = new PostAdapter(mPostList);
+
+            // Attach adapter to the RecyclerView
+            mPostListRecyclerView.setAdapter(mPostAdapter);
+
+            // Check network connection
             if (!UtilsNet.isNetworkAvailableAndConnected(getActivity())) {
-                // Display error
+                // No network connection
+                // Check if there is cached data
+                if (mPostList.size() == 0) {
+                    // No cached data. Display error
 
-                // Hide RecyclerView
-                mPostListRecyclerView.setVisibility(View.GONE);
+                    // Hide RecyclerView
+                    mPostListRecyclerView.setVisibility(View.GONE);
 
-                // Display empty view
-                mEmptyTextView.setVisibility(View.VISIBLE);
+                    // Display empty view
+                    mEmptyTextView.setVisibility(View.VISIBLE);
+                }
             } else {
-                // Otherwise display RecyclerView with data
-
-                // Display RecyclerView
+                // Network connection available
+                // Display RecyclerView with cached data
                 mPostListRecyclerView.setVisibility(View.VISIBLE);
 
                 // Hide empty view
                 mEmptyTextView.setVisibility(View.GONE);
+
+                // TODO: Start fetching post list from the network here
             }
-
-            // TODO: Get posts from DataStorage here
-            mPostAdapter = new PostAdapter(new ArrayList<RSSPost>());
-
-            // Attach adapter to the RecyclerView
-            mPostListRecyclerView.setAdapter(mPostAdapter);
         }
 
         return v;
