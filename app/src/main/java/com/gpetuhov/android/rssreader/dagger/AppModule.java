@@ -75,8 +75,8 @@ public class AppModule {
     // Returns instance of FeedFetcher
     @Provides
     @Singleton
-    FeedFetcher providesFeedFetcher(OkHttpClient okHttpClient) {
-        FeedFetcher feedFetcher = new FeedFetcher(okHttpClient);
+    FeedFetcher providesFeedFetcher(OkHttpClient okHttpClient, DataStorage dataStorage) {
+        FeedFetcher feedFetcher = new FeedFetcher(okHttpClient, dataStorage);
         return feedFetcher;
     }
 }

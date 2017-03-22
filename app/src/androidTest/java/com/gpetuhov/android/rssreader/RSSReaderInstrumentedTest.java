@@ -24,6 +24,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
@@ -275,9 +276,12 @@ public class RSSReaderInstrumentedTest {
         try {
             createParser(inputStream);
 
+            // Create DataStorage instance and set Realm for it
+            DataStorage dataStorage = new DataStorage(mContext, mUtilsPrefs, mTestRealm);
+
             // Extract feed title from sample XML
             String feedTitle =
-                    new FeedFetcher(new OkHttpClient()).extractFeedTitle(mXmlPullParser);
+                    new FeedFetcher(new OkHttpClient(), dataStorage).extractFeedTitle(mXmlPullParser);
 
             // Check if extracted title is the same as in sample XML
             assertEquals(expectedFeedTitle, feedTitle);
@@ -297,6 +301,93 @@ public class RSSReaderInstrumentedTest {
 
         // Set input for the parser
         mXmlPullParser.setInput(input, null);
+    }
+
+    @Test
+    public void checkAddFeedAndSetTitle() {
+        // Create DataStorage instance and set Realm for it
+        DataStorage dataStorage = new DataStorage(mContext, mUtilsPrefs, mTestRealm);
+
+        // Add feed to storage
+        dataStorage.addFeed(FEED_LINK);
+
+        // Set new feed title
+        String newFeedTitle = "New feed title";
+        boolean isUpdated = dataStorage.setFeedTitle(FEED_LINK, newFeedTitle);
+
+        // Check if returned true
+        assertTrue(isUpdated);
+
+        // Get feed from data storage
+        RSSFeed rssFeed = dataStorage.getFeed(FEED_LINK);
+
+        // Check if feed exists and its title is updated
+        assertNotNull(rssFeed);
+        assertEquals(newFeedTitle, rssFeed.getTitle());
+    }
+
+    @Test
+    public void checkUpdateFeed() {
+
+        // Create dummy data
+        String feedTitle = "Another feed title";
+        String feedLink = "Another feed link";
+
+        List<RSSPost> rssPosts = new ArrayList<>();
+
+        for (int i = 0; i < 5; i++) {
+            RSSPost rssPost = new RSSPost();
+            rssPost.setTitle("Title " + i);
+            rssPost.setDescription("Description " + i);
+            rssPosts.add(rssPost);
+        }
+
+        // Create DataStorage instance and set Realm for it
+        DataStorage dataStorage = new DataStorage(mContext, mUtilsPrefs, mTestRealm);
+
+        // Update/create feed
+        dataStorage.updateFeed(feedLink, feedTitle, rssPosts);
+        // Feed with this link didn't exist, so it will be created
+
+        // Query for feed with such link
+        RSSFeed resultRssFeed = dataStorage.getFeed(feedLink);
+
+        // Check feed identity
+        assertNotNull(resultRssFeed);
+        assertEquals(feedTitle, resultRssFeed.getTitle());
+        assertEquals(feedLink, resultRssFeed.getLink());
+
+        // Get list of posts from result feed
+        List<RSSPost> resultRssPosts = resultRssFeed.getRSSPostList();
+
+        // Check posts identity
+        for (int i = 0; i < 5; i++) {
+            assertEquals("Title " + i, resultRssPosts.get(i).getTitle());
+            assertEquals("Description " + i, resultRssPosts.get(i).getDescription());
+        }
+
+        // Create second dummy data
+        String feedTitle2 = "Another feed title 2";
+        String postTitle2 = "Post title 2";
+        String postDescription2 = "Post description 2";
+        List<RSSPost> rssPosts2 = new ArrayList<>();
+        RSSPost rssPost = new RSSPost();
+        rssPost.setTitle(postTitle2);
+        rssPost.setDescription(postDescription2);
+        rssPosts2.add(rssPost);
+
+        // Update/create feed
+        dataStorage.updateFeed(feedLink, feedTitle2, rssPosts2);
+        // Now feed will NOT be created, it will be updated
+
+        // Check feed identity
+        assertNotNull(resultRssFeed);
+        assertEquals(feedTitle2, resultRssFeed.getTitle());
+        assertEquals(feedLink, resultRssFeed.getLink());
+
+        // Check post identity
+        assertEquals(postTitle2, resultRssFeed.getRSSPostList().get(0).getTitle());
+        assertEquals(postDescription2, resultRssFeed.getRSSPostList().get(0).getDescription());
     }
 
     @After

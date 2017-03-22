@@ -6,6 +6,8 @@ import android.content.Context;
 import com.gpetuhov.android.rssreader.R;
 import com.gpetuhov.android.rssreader.utils.UtilsPrefs;
 
+import java.util.List;
+
 import io.realm.Realm;
 import io.realm.RealmList;
 import io.realm.RealmResults;
@@ -83,8 +85,7 @@ public class DataStorage {
     public RealmList<RSSPost> getPostList(String feedLink) {
 
         // Query Realm for RSS feed with provided link
-        final RSSFeed rssFeed =
-                mRealm.where(RSSFeed.class).equalTo("mLink", feedLink).findFirst();
+        final RSSFeed rssFeed = getFeed(feedLink);
 
         // Check if result exists
         if (rssFeed != null) {
@@ -94,6 +95,74 @@ public class DataStorage {
             // Otherwise return empty list
             return new RealmList<>();
         }
+    }
+
+    public RSSFeed getFeed(String feedLink) {
+        return mRealm.where(RSSFeed.class).equalTo("mLink", feedLink).findFirst();
+    }
+
+    public void addFeed(String link) {
+        mRealm.beginTransaction();
+        RSSFeed rssFeed = mRealm.createObject(RSSFeed.class);
+        rssFeed.setLink(link);
+        mRealm.commitTransaction();
+    }
+
+    // Set title of the feed with the given link.
+    // Return true on success.
+    public boolean setFeedTitle(String feedLink, String newTitle) {
+
+        // Query Realm for RSS feed with provided link
+        final RSSFeed rssFeed = getFeed(feedLink);
+
+        // Check if result exists
+        if (rssFeed != null) {
+            // If feed exists, update its title
+            mRealm.beginTransaction();
+            rssFeed.setTitle(newTitle);
+            mRealm.commitTransaction();
+            return true;
+        } else {
+            // Otherwise return false
+            return false;
+        }
+    }
+
+    // Update feed with new title and posts.
+    // If the feed does not exist, create it.
+    public void updateFeed(String feedLink, String newTitle, List<RSSPost> newPosts) {
+
+        // Get feed with provided link
+        RSSFeed rssFeed = getFeed(feedLink);
+
+        mRealm.beginTransaction();
+
+        // If no such feed in storage
+        if (null == rssFeed) {
+            // Create it
+            rssFeed = mRealm.createObject(RSSFeed.class);
+            rssFeed.setTitle(newTitle);
+            rssFeed.setLink(feedLink);
+        } else {
+            // Otherwise update its title
+            rssFeed.setTitle(newTitle);
+        }
+
+        // Get list of old posts
+        RealmList<RSSPost> rssPosts = rssFeed.getRSSPostList();
+
+        // Delete old posts
+        rssPosts.deleteAllFromRealm();
+
+        // Add new posts
+        for (RSSPost newPost : newPosts) {
+            RSSPost rssPost = mRealm.createObject(RSSPost.class);
+            rssPost.setTitle(newPost.getTitle());
+            rssPost.setDescription(newPost.getDescription());
+            rssPosts.add(rssPost);
+        }
+
+        mRealm.commitTransaction();
     }
 
     @Override

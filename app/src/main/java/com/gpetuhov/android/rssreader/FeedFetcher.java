@@ -3,6 +3,9 @@ package com.gpetuhov.android.rssreader;
 
 import android.util.Xml;
 
+import com.gpetuhov.android.rssreader.data.DataStorage;
+import com.gpetuhov.android.rssreader.data.RSSFeed;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -25,12 +28,16 @@ public class FeedFetcher implements Callback<ResponseBody> {
 
     private OkHttpClient mOkHttpClient;
     private Retrofit mRetrofit;
+    private DataStorage mDataStorage;
 
     // Keeps response from the server converted to InputStream
     // (this is needed for XMLPullParser).
     private InputStream mXMLResponse;
 
     private String mFeedTitle;
+    private String mFeedLink;
+
+    private RSSFeed mRSSFeed;
 
     // API interface to be used in Retrofit
     private interface FeedFetchService {
@@ -40,23 +47,26 @@ public class FeedFetcher implements Callback<ResponseBody> {
         // not base URL, @GET(url) and query parameters as usual.
     }
 
-    public FeedFetcher(OkHttpClient okHttpClient) {
+    public FeedFetcher(OkHttpClient okHttpClient, DataStorage dataStorage) {
         mOkHttpClient = okHttpClient;
+        mDataStorage = dataStorage;
     }
 
     public void fetchFeed(String feedLink) {
 
+        mFeedLink = feedLink;
+
         // Build Retrofit instance for the provided link
         mRetrofit = new Retrofit.Builder()
                 .client(mOkHttpClient)
-                .baseUrl(feedLink)
+                .baseUrl(mFeedLink)
                 .build();
 
         // Create instance of the API interface implementation
         FeedFetchService service = mRetrofit.create(FeedFetchService.class);
 
         // Create call
-        Call<ResponseBody> call = service.getFeed(feedLink);
+        Call<ResponseBody> call = service.getFeed(mFeedLink);
 
         // Execute call asynchronously
         // (retrofit performs and handles the method execution in a separate thread).
@@ -102,11 +112,15 @@ public class FeedFetcher implements Callback<ResponseBody> {
                 // Move to first tag (start the parsing process)
                 parser.nextTag();
 
+                // Extract feed title
                 mFeedTitle = extractFeedTitle(parser);
 
-                // TODO: Write feed title to storage
+
+
 
                 // TODO: Extract posts here
+
+                // TODO: Write all changes to storage here (feed title and posts)
 
             } catch (XmlPullParserException e) {
                 // TODO: Report error
