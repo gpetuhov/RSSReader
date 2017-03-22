@@ -14,12 +14,19 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!--Activity with list of RSS feeds-->
         <activity android:name=".FeedListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+        </activity>
+
+        <!--Activity with list of posts in the feed-->
+        <activity
+            android:name=".PostListActivity"
+            android:parentActivityName=".FeedListActivity">
         </activity>
 
     </application>

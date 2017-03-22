@@ -1,6 +1,5 @@
 package com.gpetuhov.android.rssreader;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -12,11 +11,12 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.gpetuhov.android.rssreader.data.DataStorage;
-import com.gpetuhov.android.rssreader.data.RSSFeed;
+import com.gpetuhov.android.rssreader.data.RSSPost;
 import com.gpetuhov.android.rssreader.events.OpenFeedEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -25,22 +25,24 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
-
-// Fragment with list of RSS feeds
-public class FeedListFragment extends Fragment {
+// Fragment for list of RSS posts in the feed
+public class PostListFragment extends Fragment {
 
     // Dependencies injected by Dagger
     @Inject DataStorage mDataStorage;
     @Inject EventBus mEventBus;
 
-    // RecyclerView for RSS feed list
-    @BindView(R.id.feed_list_recycler_view) RecyclerView mFeedListRecyclerView;
+    // RecyclerView for posts list
+    @BindView(R.id.post_list_recycler_view) RecyclerView mPostListRecyclerView;
 
     // Keeps Unbinder object to properly unbind views in onDestroyView of the fragment
     private Unbinder mUnbinder;
 
     // Adapter for the RecyclerView
-    private FeedAdapter mFeedAdapter;
+    private PostAdapter mPostAdapter;
+
+    // Keeps RSS feed link
+    private String mFeedLink;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,20 +57,29 @@ public class FeedListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
-        View v = inflater.inflate(R.layout.fragment_feed_list, container, false);
+        View v = inflater.inflate(R.layout.fragment_post_list, container, false);
 
         // Bind views and save reference to Unbinder object
         mUnbinder = ButterKnife.bind(this, v);
 
         // Set LinearLayoutManager for our RecyclerView (we need vertical scroll list)
-        mFeedListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mPostListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        // Get list of RSS feeds from the storage
-        // and create new adapter for the RecyclerView with it.
-        mFeedAdapter = new FeedAdapter(mDataStorage.getFeedList());
+        // Manually get event with feed link from EventBus and remove it.
+        // To do this we don't have to register to listen to EventBus events in onStart().
+        OpenFeedEvent openFeedEvent = mEventBus.removeStickyEvent(OpenFeedEvent.class);
+
+        // Check if an event was actually posted before
+        if(openFeedEvent != null) {
+            // Get RSS feed link from event
+            mFeedLink = openFeedEvent.getFeedLink();
+        }
+
+        // TODO: Get posts from DataStorage here
+        mPostAdapter = new PostAdapter(new ArrayList<RSSPost>());
 
         // Attach adapter to the RecyclerView
-        mFeedListRecyclerView.setAdapter(mFeedAdapter);
+        mPostListRecyclerView.setAdapter(mPostAdapter);
 
         return v;
     }
@@ -83,16 +94,17 @@ public class FeedListFragment extends Fragment {
 
     // === RECYCLERVIEW VIEWHOLDER AND ADAPTER =====
 
-    class FeedHolder extends RecyclerView.ViewHolder
+    class PostHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
-        // Keeps RSS feed list item
-        private RSSFeed mRSSFeed;
+        // Keeps post list item
+        private RSSPost mRSSPost;
 
-        // TextView for RSS Feed title
-        @BindView(R.id.rss_feed_title) public TextView mRSSFeedTitleTextView;
+        // TextView for post title
+        @BindView(R.id.post_title)
+        public TextView mPostTitleTextView;
 
-        public FeedHolder(View itemView) {
+        public PostHolder(View itemView) {
             super(itemView);
 
             itemView.setOnClickListener(this);
@@ -101,60 +113,47 @@ public class FeedListFragment extends Fragment {
             ButterKnife.bind(this, itemView);
         }
 
-        public void bindFeed(RSSFeed rssFeed) {
-            mRSSFeed = rssFeed;
-            mRSSFeedTitleTextView.setText(rssFeed.getTitle());
+        public void bindPost(RSSPost rssPost) {
+            mRSSPost = rssPost;
+            mPostTitleTextView.setText(rssPost.getTitle());
         }
 
         @Override
         public void onClick(View v) {
-            // Post result to EventBus as STICKY event.
-            // This is needed, because at this moment post list fragment is not started
-            // and can't receive events.
-            // Post list fragment will be able
-            // to get sticky event from EventBus after start.
-            mEventBus.postSticky(new OpenFeedEvent(mRSSFeed.getLink()));
-
-            // Create explicit intent to start post list activity.
-            // No need to add feed link as intent extra,
-            // because we deliver it to post list fragment via EventBus.
-            Intent intent = new Intent(getActivity(), PostListActivity.class);
-
-            // Start post list activity
-            startActivity(intent);
+            // TODO: Handle post clicks here
         }
     }
 
-    private class FeedAdapter extends RecyclerView.Adapter<FeedHolder> {
+    private class PostAdapter extends RecyclerView.Adapter<PostHolder> {
 
-        private List<RSSFeed> mRSSFeeds;
+        private List<RSSPost> mRSSPosts;
 
-        public FeedAdapter(List<RSSFeed> RSSFeeds) {
-            mRSSFeeds = RSSFeeds;
+        public PostAdapter(List<RSSPost> RSSPosts) {
+            mRSSPosts = RSSPosts;
         }
 
         @Override
-        public FeedHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        public PostHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             // Get LayoutInflater from parent activity
             LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
 
             // Create view for one list item from item layout
-            View view = layoutInflater.inflate(R.layout.list_item_feed, parent, false);
+            View view = layoutInflater.inflate(R.layout.list_item_post, parent, false);
 
             // Create ViewHolder with inflated view for one list item
-            return new FeedHolder(view);
+            return new PostHolder(view);
         }
 
         @Override
-        public void onBindViewHolder(FeedHolder holder, int position) {
-            RSSFeed rssFeed = mRSSFeeds.get(position);
-            holder.bindFeed(rssFeed);
+        public void onBindViewHolder(PostHolder holder, int position) {
+            RSSPost rssPost = mRSSPosts.get(position);
+            holder.bindPost(rssPost);
         }
 
         @Override
         public int getItemCount() {
-            if (mRSSFeeds != null) {
-                return mRSSFeeds.size();
+            if (mRSSPosts != null) {
+                return mRSSPosts.size();
             } else {
                 return 0;
             }

@@ -9,8 +9,10 @@ import android.support.test.runner.AndroidJUnit4;
 import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.data.RSSFeed;
 import com.gpetuhov.android.rssreader.data.RSSPost;
+import com.gpetuhov.android.rssreader.events.OpenFeedEvent;
 import com.gpetuhov.android.rssreader.utils.UtilsPrefs;
 
+import org.greenrobot.eventbus.EventBus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -189,5 +191,23 @@ public class RSSReaderInstrumentedTest {
 
         // Delete test Realm file
         Realm.deleteRealm(realmConfiguration);
+    }
+
+    @Test
+    public void checkOpenFeedEventCreation() {
+        // Get instance of EventBus
+        EventBus eventBus = EventBus.getDefault();
+
+        // Create new OpenFeedEvent and post it to EventBus
+        eventBus.postSticky(new OpenFeedEvent(FEED_LINK));
+
+        // Manually get event from EventBus and remove it.
+        OpenFeedEvent openFeedEvent = eventBus.removeStickyEvent(OpenFeedEvent.class);
+
+        // Event must be not null, as we have just posted it.
+        assertNotNull(openFeedEvent);
+
+        // We must get event, that we have just posted.
+        assertEquals(FEED_LINK, openFeedEvent.getFeedLink());
     }
 }

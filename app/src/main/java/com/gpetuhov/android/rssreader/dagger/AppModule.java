@@ -7,6 +7,8 @@ import android.preference.PreferenceManager;
 import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.utils.UtilsPrefs;
 
+import org.greenrobot.eventbus.EventBus;
+
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -51,5 +53,12 @@ public class AppModule {
     DataStorage providesDataStorage(Application application, UtilsPrefs utilsPrefs) {
         DataStorage dataStorage = new DataStorage(application, utilsPrefs);
         return dataStorage;
+    }
+
+    // Returns instance of EventBus
+    @Provides
+    @Singleton
+    EventBus providesEventBus() {
+        return EventBus.getDefault();
     }
 }
