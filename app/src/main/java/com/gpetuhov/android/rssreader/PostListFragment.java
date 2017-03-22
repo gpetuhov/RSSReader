@@ -3,6 +3,7 @@ package com.gpetuhov.android.rssreader;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -93,8 +94,15 @@ public class PostListFragment extends Fragment {
         // Bind views and save reference to Unbinder object
         mUnbinder = ButterKnife.bind(this, v);
 
-        // Set LinearLayoutManager for our RecyclerView (we need vertical scroll list)
-        mPostListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        // Create LinearLayoutManager for our RecyclerView (we need vertical scroll list)
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        mPostListRecyclerView.setLayoutManager(layoutManager);
+
+        // Add dividers between items
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
+                mPostListRecyclerView.getContext(),
+                layoutManager.getOrientation());
+        mPostListRecyclerView.addItemDecoration(dividerItemDecoration);
 
         // Check if there is saved instance state Bundle
         if (savedInstanceState != null) {

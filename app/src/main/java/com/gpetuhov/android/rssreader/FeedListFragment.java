@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -60,8 +61,15 @@ public class FeedListFragment extends Fragment {
         // Bind views and save reference to Unbinder object
         mUnbinder = ButterKnife.bind(this, v);
 
-        // Set LinearLayoutManager for our RecyclerView (we need vertical scroll list)
-        mFeedListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        // Create LinearLayoutManager for our RecyclerView (we need vertical scroll list)
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        mFeedListRecyclerView.setLayoutManager(layoutManager);
+
+        // Add dividers between items
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
+                mFeedListRecyclerView.getContext(),
+                layoutManager.getOrientation());
+        mFeedListRecyclerView.addItemDecoration(dividerItemDecoration);
 
         // Get list of RSS feeds from the storage
         // and create new adapter for the RecyclerView with it.
