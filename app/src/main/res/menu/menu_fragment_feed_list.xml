@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--Menu for feed list fragment-->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--Item - "Add" is shown in toolbar if there is room
+    (if not, it is shown in overflow menu)-->
+    <item
+        android:id="@+id/action_add_feed"
+        android:title="@string/action_add_feed"
+        android:icon="@drawable/ic_action_add_feed"
+        app:showAsAction="ifRoom"/>
+
+</menu>

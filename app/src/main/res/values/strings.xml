@@ -14,5 +14,6 @@
     <string name="default_rss_feed_link_4">https://habrahabr.ru/rss/best/alltime/</string>
 
     <string name="no_internet_connection">No internet connection</string>
+    <string name="action_add_feed">Add subscription</string>
 
 </resources>

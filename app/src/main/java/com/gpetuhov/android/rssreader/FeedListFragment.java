@@ -8,6 +8,9 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -46,6 +49,9 @@ public class FeedListFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // This fragment has menu
+        setHasOptionsMenu(true);
 
         // Inject dependencies
         RSSReaderApp.getAppComponent().inject(this);
@@ -87,6 +93,29 @@ public class FeedListFragment extends Fragment {
 
         // This is recommended to do here when using Butterknife in fragments
         mUnbinder.unbind();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate menu
+        inflater.inflate(R.menu.menu_fragment_feed_list, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // Get selected item ID
+        int id = item.getItemId();
+
+        // If user selected Add Subscription item
+        if (R.id.action_add_feed == id) {
+
+            // TODO: Add subscription here
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     // === RECYCLERVIEW VIEWHOLDER AND ADAPTER =====
