@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -33,6 +34,8 @@ import butterknife.Unbinder;
 // Fragment with list of RSS feeds
 public class FeedListFragment extends Fragment {
 
+    public static final int ADD_FEED_REQUEST_CODE = 0;
+    public static final String ADD_FEED_DIALOG_TAG = "AddFeedDialogTag";
     // Dependencies injected by Dagger
     @Inject DataStorage mDataStorage;
     @Inject EventBus mEventBus;
@@ -109,13 +112,28 @@ public class FeedListFragment extends Fragment {
 
         // If user selected Add Subscription item
         if (R.id.action_add_feed == id) {
-
-            // TODO: Add subscription here
-
+            showAddFeedDialog();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showAddFeedDialog() {
+        // Get fragment manager of the host of this fragment
+        // (in our case - host activity's fragment manager).
+        FragmentManager manager = getFragmentManager();
+
+        // Create new fragment with add feed dialog
+        AddFeedFragment addFeedFragment = new AddFeedFragment();
+
+        // Set this FeedListFragment as target fragment for AddFeedFragment
+        // (this is needed to return results from AddFeedFragment to FeedListFragment).
+        // This connection is managed by FragmentManager.
+        addFeedFragment.setTargetFragment(FeedListFragment.this, ADD_FEED_REQUEST_CODE);
+
+        // Add fragment into FragmentManager and show fragment on screen
+        addFeedFragment.show(manager, ADD_FEED_DIALOG_TAG);
     }
 
     // === RECYCLERVIEW VIEWHOLDER AND ADAPTER =====
