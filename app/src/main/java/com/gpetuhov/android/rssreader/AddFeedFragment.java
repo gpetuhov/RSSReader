@@ -10,6 +10,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -29,6 +30,8 @@ public class AddFeedFragment extends DialogFragment {
     private Unbinder mUnbinder;
 
     private String mFeedLink = "";
+
+    private AlertDialog mAddFeedDialog;
 
     // Called when host activity's FragmentManager displays DialogFragment on screen
     @NonNull
@@ -50,8 +53,25 @@ public class AddFeedFragment extends DialogFragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Save entered text
-                mFeedLink = s.toString();
+                // Get entered text
+                String enteredText = s.toString();
+
+                // Check if entered text is a valid URL
+                boolean isURL = Patterns.WEB_URL.matcher(enteredText).matches();
+
+                if (isURL) {
+                    // Entered text is a valid URL
+
+                    // Save entered text (feed link)
+                    mFeedLink = enteredText;
+
+                    // Enable OK button
+                    mAddFeedDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                } else {
+                    // Entered text is not a valid URL
+                    // Disable OK button
+                    mAddFeedDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                }
             }
 
             @Override
@@ -61,7 +81,7 @@ public class AddFeedFragment extends DialogFragment {
         });
 
         // Create new AlertDialog with this view
-        AlertDialog addFeedDialog = new AlertDialog.Builder(getActivity())
+        mAddFeedDialog = new AlertDialog.Builder(getActivity())
                 .setView(v)
                 .setTitle(R.string.action_add_feed)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -74,7 +94,15 @@ public class AddFeedFragment extends DialogFragment {
                 .setNegativeButton(android.R.string.cancel, null)
                 .create();
 
-        return addFeedDialog;
+        // Set OK button disabled by default
+        mAddFeedDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+            }
+        });
+
+        return mAddFeedDialog;
     }
 
     @Override

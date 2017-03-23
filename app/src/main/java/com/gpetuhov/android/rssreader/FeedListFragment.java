@@ -1,5 +1,6 @@
 package com.gpetuhov.android.rssreader;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -15,12 +16,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.gpetuhov.android.rssreader.data.DataStorage;
 import com.gpetuhov.android.rssreader.data.RSSFeed;
+import com.gpetuhov.android.rssreader.events.FeedFetchErrorEvent;
+import com.gpetuhov.android.rssreader.events.FeedFetchSuccessEvent;
 import com.gpetuhov.android.rssreader.events.OpenFeedEvent;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.List;
 
@@ -34,11 +40,14 @@ import butterknife.Unbinder;
 // Fragment with list of RSS feeds
 public class FeedListFragment extends Fragment {
 
+    // Needed to show add feed dialog and get results from it
     public static final int ADD_FEED_REQUEST_CODE = 0;
     public static final String ADD_FEED_DIALOG_TAG = "AddFeedDialogTag";
+
     // Dependencies injected by Dagger
     @Inject DataStorage mDataStorage;
     @Inject EventBus mEventBus;
+    @Inject FeedFetcher mFeedFetcher;
 
     // RecyclerView for RSS feed list
     @BindView(R.id.feed_list_recycler_view) RecyclerView mFeedListRecyclerView;
@@ -49,6 +58,8 @@ public class FeedListFragment extends Fragment {
     // Adapter for the RecyclerView
     private FeedAdapter mFeedAdapter;
 
+    private String mAddedFeedLink;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +69,22 @@ public class FeedListFragment extends Fragment {
 
         // Inject dependencies
         RSSReaderApp.getAppComponent().inject(this);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // Register to listen to EventBus events
+        mEventBus.register(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // Unregister from EventBus
+        mEventBus.unregister(this);
     }
 
     @Nullable
@@ -134,6 +161,32 @@ public class FeedListFragment extends Fragment {
 
         // Add fragment into FragmentManager and show fragment on screen
         addFeedFragment.show(manager, ADD_FEED_DIALOG_TAG);
+    }
+
+    // Called by add feed fragment to return results
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+
+        // If result is not OK, do nothing and return
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+
+        // Check if the result comes from add feed fragment
+        if (requestCode == ADD_FEED_REQUEST_CODE) {
+            // Get feed link from the intent
+            mAddedFeedLink = intent.getStringExtra(AddFeedFragment.ADD_FEED_LINK_KEY);
+
+            if (null == mAddedFeedLink || "" == mAddedFeedLink) {
+                Toast.makeText(getActivity(), "Not a valid URL", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Start fetching feed from the provided link
+            mFeedFetcher.fetchFeed(mAddedFeedLink);
+
+            // TODO: Show progress bar here
+        }
     }
 
     // === RECYCLERVIEW VIEWHOLDER AND ADAPTER =====
@@ -218,5 +271,21 @@ public class FeedListFragment extends Fragment {
                 return 0;
             }
         }
+    }
+
+    // === FEEDFETCHER CALLBACKS =====
+
+    // Called when a FeedFetchSuccessEvent is posted (in the main thread to update UI)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onFeedFetchSuccess(FeedFetchSuccessEvent event) {
+        mFeedAdapter.notifyDataSetChanged();
+    }
+
+    // Called when a FeedFetchErrorEvent is posted (in the main thread to display Toast)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onFeedFetchError(FeedFetchErrorEvent event) {
+        // Get error message from the event and display Toast
+        String errorMessage = event.getErrorMessage();
+        Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
     }
 }
