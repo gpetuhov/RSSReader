@@ -118,9 +118,12 @@ public class FeedFetcher implements Callback<ResponseBody> {
                 // Extract feed title
                 mFeedTitle = extractFeedTitle(parser);
 
-                // If feed title is empty, report error
-                if (mFeedTitle.equals("")) {
-                    reportError("Error extracting feed title");
+                // If feed title is null or empty, report error
+                if (null == mFeedTitle) {
+                    reportErrorParsingXML();
+                    return;
+                } else if (mFeedTitle.equals("")) {
+                    reportErrorParsingXML();
                     return;
                 }
 

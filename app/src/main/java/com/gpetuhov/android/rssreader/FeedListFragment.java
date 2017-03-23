@@ -15,6 +15,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,6 +52,9 @@ public class FeedListFragment extends Fragment {
 
     // RecyclerView for RSS feed list
     @BindView(R.id.feed_list_recycler_view) RecyclerView mFeedListRecyclerView;
+
+    // Progress bar shown during adding of new feed
+    @BindView(R.id.add_feed_progress_bar) ProgressBar mProgressBar;
 
     // Keeps Unbinder object to properly unbind views in onDestroyView of the fragment
     private Unbinder mUnbinder;
@@ -190,7 +194,8 @@ public class FeedListFragment extends Fragment {
                 // Start fetching feed from the provided link
                 mFeedFetcher.fetchFeed(mAddedFeedLink);
 
-                // TODO: Show progress bar here
+                // Show progress bar
+                mProgressBar.setVisibility(View.VISIBLE);
             }
         }
     }
@@ -284,12 +289,21 @@ public class FeedListFragment extends Fragment {
     // Called when a FeedFetchSuccessEvent is posted (in the main thread to update UI)
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onFeedFetchSuccess(FeedFetchSuccessEvent event) {
+
+        // Hide progress bar
+        mProgressBar.setVisibility(View.GONE);
+
+        // Update UI
         mFeedAdapter.notifyDataSetChanged();
     }
 
     // Called when a FeedFetchErrorEvent is posted (in the main thread to display Toast)
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onFeedFetchError(FeedFetchErrorEvent event) {
+
+        // Hide progress bar
+        mProgressBar.setVisibility(View.GONE);
+
         // Get error message from the event and display Toast
         String errorMessage = event.getErrorMessage();
         Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
