@@ -182,10 +182,16 @@ public class FeedListFragment extends Fragment {
                 return;
             }
 
-            // Start fetching feed from the provided link
-            mFeedFetcher.fetchFeed(mAddedFeedLink);
+            RSSFeed rssFeed = mDataStorage.getFeed(mAddedFeedLink);
 
-            // TODO: Show progress bar here
+            if (rssFeed != null) {
+                Toast.makeText(getActivity(), "Already subscribed to this feed", Toast.LENGTH_SHORT).show();
+            } else {
+                // Start fetching feed from the provided link
+                mFeedFetcher.fetchFeed(mAddedFeedLink);
+
+                // TODO: Show progress bar here
+            }
         }
     }
 
