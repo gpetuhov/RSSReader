@@ -56,6 +56,15 @@ public class AddFeedFragment extends DialogFragment {
                 // Get entered text
                 String enteredText = s.toString();
 
+                // Valid URL must start with http and end with /
+                if (!enteredText.startsWith("http")) {
+                    enteredText = "http://" + enteredText;
+                }
+
+                if (!enteredText.endsWith("/")) {
+                    enteredText = enteredText + "/";
+                }
+
                 // Check if entered text is a valid URL
                 boolean isURL = Patterns.WEB_URL.matcher(enteredText).matches();
 
